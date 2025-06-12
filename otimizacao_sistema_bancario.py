@@ -81,17 +81,116 @@ def registrar_data():
     registro = datetime.now().strftime(padrao_ptbr)
     return registro
 
+def criar_usuario(lista_usuarios,cpf):
+
+    nome = input("Informe o nome completo: ").title()
+    
+    print("\nInfomr a data de nascimento: ")
+    dia = int(input("Dia: "))
+    mes = int(input("Mês (número): "))
+    ano = int(input("Ano: "))
+
+    data_nascimento = f"{dia}/{mes}/{ano}"
+
+    print("\nInforme o endereço: ")
+    logradouro = input("Logradouro: ").title()
+    numero = int(input("Número: "))
+    bairro = input("Bairro: ").title()
+    cidade = input("Cidade: ").title()
+    estado = input("Sigla do Estado: ").upper()
+
+    endereco = f"{logradouro} - {numero} - {bairro} - {cidade} - {estado}"
+
+    novo_usuario = {"cpf":cpf,"data":data_nascimento,"nome":nome,"endereco":endereco}
+
+    lista_usuarios.append(novo_usuario)
+
+    return lista_usuarios
+
+
+def verifica_usuario(lista_usuarios):
+
+    cpf = int(input("Informe o CPF (somente números): "))
+
+    usuario_existente = next((usuario for usuario in lista_usuarios if usuario["cpf"] == cpf), None)
+
+    if usuario_existente:
+        print("Usuário já cadastrado!")
+        return usuario_existente
+    
+    else:
+        opcao = input("Usuário não cadastrado! Gostaria de abrir uma conta ? [S/N]: ").upper()
+        
+        if opcao == "S":
+            return criar_usuario(lista_usuarios,cpf)
+
+        else:
+            print("Operação cancelada")
+            return None
+
+
+
+def verifica_conta(lista_usuarios, lista_contas):
+
+    cpf = int(input("Informe o CPF (somente números): "))
+
+    # Verifica se o usuário existe
+    usuario_existente = next((usuario for usuario in lista_usuarios if usuario["cpf"] == cpf), None)
+
+    
+    if not usuario_existente:
+        
+        opcao = input("CPF informado não possui cadastro. Deseja criar ? [S/N]").upper()
+
+        if opcao == "S":
+            usuario_existente = criar_usuario(lista_usuarios,cpf)
+
+        elif opcao == "N":
+            print("Operação Encerrada.")
+
+
+    # Verifica se o CPF já tem alguma conta
+    contas_existentes = [conta for conta in lista_contas if conta[2] == cpf]
+
+    if contas_existentes:
+
+        opcao = input("CPF informado já possui uma conta, deseja criar outra ? [S/N]")
+        if opcao == "S":
+            criar_conta(lista_contas= lista_contas, cpf=cpf, contas=contas)
+
+        else:
+            print("Operação Encerrada")
+    
+    else:
+        criar_conta(lista_contas=lista_contas, cpf=cpf, contas=contas)
+        print("Conta criada com sucesso!")
+
+
+def criar_conta(lista_contas, cpf, contas):
+
+    global AGENCIA
+    contas = len(contas) + 1
+    nova_conta = [AGENCIA, contas, cpf]
+
+    lista_contas.append(nova_conta)
+
+    return lista_contas, contas
 
 
 saldo = 0
 extrato = ""
 numero_saques = 0
+lista_usuarios = []
+lista_contas = []
+contas = []
 
 LIMITE_VALOR_SAQUE = 500
 LIMITE_SAQUES_DIARIOS = 3
+AGENCIA = "0001"
 
 
 while True:
+
 
     menu = """
 
@@ -102,6 +201,10 @@ Selecione a operação desejada:
 [d] Depositar
 [s] Sacar
 [e] Extrato
+[nc] Nova Conta
+[lc] Listar Contas
+[nu] Novo Usuário
+[lu] Listar Usuários
 [q] Sair
 
 => """
@@ -130,8 +233,23 @@ Selecione a operação desejada:
         
     # Mostra o extrato bancário
     elif opcao == "e":
-        
         registros_extrato(saldo, extrato=extrato)
+
+    # Verifica se o usuário existe e da a opção de criar um novo
+    elif opcao == "nu":
+        verifica_usuario(lista_usuarios=lista_usuarios)
+
+    # Lista os usuários existentes
+    elif opcao == 'lu':
+        print(lista_usuarios)
+
+    # Lista as contas existentes
+    elif opcao == "lc":
+        print(lista_contas)
+    
+    # Cria uma nova conta
+    elif opcao == "nc":
+        verifica_conta(lista_usuarios = lista_usuarios, lista_contas= lista_contas)
 
     # Encerra o programa
     elif opcao == "q":
